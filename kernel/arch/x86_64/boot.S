@@ -14,11 +14,16 @@
 
 # Reserve a stack for the initial thread.
 .section .bss
+.global stack_bottom
+.global stack_top
 	.align 16
 stack_bottom:
 	.skip 16384 # 16 KiB
 stack_top:
 	.align 16
+
+.global df_stack_bottom
+.global df_stack_top
 df_stack_bottom:
 	.skip 8192 # 8 KiB double-fault stack
 df_stack_top:
@@ -29,8 +34,8 @@ df_stack_top:
 .global _start
 .type _start, @function
 _start:
-	movl $stack_top, %esp
-
+	movq $stack_top, %rsp
+	cli
 	# Call the global constructors.
 	call _init
 
