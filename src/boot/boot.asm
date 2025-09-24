@@ -75,8 +75,16 @@ load32:
     in al, 0x92
     or al, 2
     out 0x92, al
-    
-    jmp $
+        
+    ; load kernel
+    ; lba sector 0 os bootloader, 1 is the second sector
+    mov eax, 1
+    mov ecx, 100            ; 51200 bytes loaded
+    mov edi, 0x0100000      ; the address in memory to load the sectors into
+    call ata_lba_read
+    ; Now we jump to where we loaded our kernel, this executing kernel.asm
+    ; CODE_SEG ensures CS becomes the code selector specified in GDT.
+    jmp CODE_SEG:0x0100000
 
 ata_lba_read:
     mov ebx, eax            ; backup logical block address
