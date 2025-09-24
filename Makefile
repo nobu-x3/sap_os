@@ -1,6 +1,6 @@
 DEFAULT_HOST!=./default-host.sh
 HOST?=DEFAULT_HOST
-FILES=./build/kernel.asm.o
+FILES=./build/kernel.asm.o ./build/kernel.o
 INCLUDES= -I./src
 FLAGS=-g -ffreestanding -falign-jumps -falign-functions -falign-labels -falign-loops -fstrength-reduce -fomit-frame-pointer -finline-functions -Wno-unused-functions -fno-builtin -Werror -Wno-unused-label -Wno-cpp -Wno-unused-parameter -nostdlib -nostartfiles -nodefaultlibs -Wall -O0 -Iinc
 
@@ -19,6 +19,9 @@ all: ./bin/boot.bin ./bin/kernel.bin
 
 ./build/kernel.asm.o: ./src/kernel.asm
 	$(AS) -f elf -g ./src/kernel.asm -o ./build/kernel.asm.o
+
+./build/kernel.o : ./src/kernel.c
+	$(CC) $(INCLUDES) $(FLAGS) -std=gnu99 -c ./src/kernel.c -o ./build/kernel.o
 
 clean:
 	rm -rf ./bin/*

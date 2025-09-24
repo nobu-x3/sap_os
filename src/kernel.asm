@@ -1,5 +1,6 @@
 [BITS 32]
 global _start
+extern kernel_main
 
 CODE_SEG equ 0x08       ; code_seg entry in GDT
 DATA_SEG equ 0x10       ; data_seg entry in GDT
@@ -13,6 +14,12 @@ _start:
     mov ss, ax
     mov ebp, 0x00200000
     mov esp, ebp
+
+    in al, 0x92
+    or al, 2
+    out 0x92, al
+
+    call kernel_main
 
     jmp $
 
