@@ -1,45 +1,73 @@
-ORG 0
+ORG 0x7c00
 BITS 16
 
+CODE_SEG equ gdt_code - gdt_start
+DATA_SEG equ gdt_data - gdt_start
+
+_start:
+    jmp short start
+    nop
+
+times 33 db 0
+
 start:
+    jmp 0:step2
+
+step2:
     cli
-    mov ax, 0x7c0
+    mov ax, 0x00
     mov ds, ax
     mov es, ax
-    mov ax, 0x00
     mov ss, ax
+    mov sp, 0x7c00
     sti
 
-    mov ax, 0x7c0
-    mov word [ss:0x02], ax ; the logic here is that addr = inter_index * sizeof(addr) and this is the offset
-    mov ax, div_zero_print
-    mov word [ss:0x00], ax
+.load_protected:
+    cli
+    lgdt[gdt_descriptor]
+    mov eax, cr0
+    or eax, 0x1             ; this ORs eax thus enabling protected mode and the long jump to load32
+    mov cr0, eax
+    jmp CODE_SEG:load32     ; actual final step to switch to protected mode
 
-    mov ax, 0
-    div ax
-    jmp $
+gdt_start:
+gdt_null:
+    dd 0x0
+    dd 0x0
 
-div_zero_print:
-    mov si, div_zero_msg
-    call print
-    iret
+; offset 0x8
+gdt_code:       ; CS SHOULD POINT TO THIS
+    dw 0xffff   ; Segment limit bits 0-15
+    dw 0        ; Base bits 0-15
+    db 0        ; Base bits 16-23 
+    db 0x9a     ; Access byte
+    db 11001111b; High 4 bit flags and low 4 bit flags
+    db 0        ; Base bits 24-31
 
-print:
-    mov bx, 0
-    .loop:
-        lodsb
-        cmp al, 0
-        je .done
-        call print_char
-        jmp .loop
-    .done:
-        ret
+; offset 0x10
+gdt_data:
+    dw 0xffff   ; Segment limit bits 0-15
+    dw 0        ; Base bits 0-15
+    db 0        ; Base bits 16-23 
+    db 0x92     ; Access byte
+    db 11001111b; High 4 bit flags and low 4 bit flags
+    db 0        ; Base bits 24-31
 
-print_char:
-    mov ah, 0eh
-    int 0x10
-    ret
+gdt_end:
+gdt_descriptor:
+    dw gdt_end - gdt_start - 1
+    dd gdt_start
 
-div_zero_msg: db "Divide by zero error!", 0
+[BITS 32]
+load32:
+    mov ax, DATA_SEG
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
+    mov ss, ax
+    mov ebp, 0x000200000
+    mov esp, ebp
+    
 times 510 -($-$$) db 0
 dw 0xAA55
