@@ -1,4 +1,6 @@
 *.iso
 isodir
 sysroot
+bin
+build
 *.bin
