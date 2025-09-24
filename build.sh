@@ -1,3 +1,4 @@
 #/bin/bash
-source ./config.sh
+set -e
+. ./config.sh
 make all

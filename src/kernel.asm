@@ -15,3 +15,5 @@ _start:
     mov esp, ebp
 
     jmp $
+
+times 512-($-$$) db 0
