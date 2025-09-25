@@ -1,60 +1,74 @@
 DEFAULT_HOST!=../default-host.sh
 HOST?=DEFAULT_HOST
 HOSTARCH!=../target-triplet-to-arch.sh $(HOST)
-# INCLUDES= -I./src
-ARCHDIR=arch/$(HOSTARCH)
-BUILDDIR=../build/kernel
-BINDIR=../bin
 
-FLAGS=-g -ffreestanding -falign-jumps -falign-functions -falign-labels -falign-loops -fstrength-reduce -fomit-frame-pointer -finline-functions -Wno-unused-functions -fno-builtin -Werror -Wno-unused-label -Wno-cpp -Wno-unused-parameter -nostdlib -nostartfiles -nodefaultlibs -Wall -O0 -Iinclude
+ARCHDIR := arch/$(HOSTARCH)
+BUILDDIR := ../build
+$(shell mkdir -p $(BUILDDIR))
 
-OBJS=$(BUILDDIR)/kernel.o \
-$(BUILDDIR)/kernel.asm.o
+DESTDIR ?=
+PREFIX ?= /usr/local
+EXEC_PREFIX ?= $(PREFIX)
+BOOTDIR ?= $(EXEC_PREFIX)/boot
+INCLUDEDIR ?= $(PREFIX)/include
+LIBDIR ?= $(EXEC_PREFIX)/lib
 
-BINOBJS=$(BUILDDIR)/boot.bin \
-$(BUILDDIR)/kernel.bin
+CFLAGS  := -g -O0 -ffreestanding -falign-jumps -falign-functions -falign-labels -falign-loops -fstrength-reduce -fomit-frame-pointer -finline-functions -Wno-unused-functions -fno-builtin -Werror -Wno-unused-label -Wno-cpp -Wno-unused-parameter -nostartfiles -Wall -Iinclude
+CPPFLAGS:= -D__is_kernel -Iinclude
+LDFLAGS := -T $(ARCHDIR)/linker.ld
 
-.PHONY: all bin clean install install-headers install-kernel
-.SUFFIXES: .o .c .S
+KERNEL_SRCS := kernel.c tty.c
+KERNEL_ASMS := kernel.S
+KERNEL_OBJS := $(patsubst %.c,$(BUILDDIR)/%.o,$(KERNEL_SRCS)) \
+               $(patsubst %.S,$(BUILDDIR)/%.S.o,$(KERNEL_ASMS))
 
+.PHONY: all clean install install-headers install-kernel
 all: bin
 
-bin: $(OBJS) $(BUILDDIR)/kernel.bin $(BUILDDIR)/boot.bin
-	rm -rf $(BUILDDIR)/sap_os.bin
-	dd if=$(BUILDDIR)/boot.bin >> $(BUILDDIR)/sap_os.bin
+bin: $(KERNEL_OBJS) $(BUILDDIR)/kernel.bin $(BUILDDIR)/boot.bin
+	@mkdir -p $(BUILDDIR)
+	@rm -f $(BUILDDIR)/sap_os.bin
+	dd if=$(BUILDDIR)/boot.bin  of=$(BUILDDIR)/sap_os.bin bs=1 conv=notrunc 2>/dev/null || true
 	dd if=$(BUILDDIR)/kernel.bin >> $(BUILDDIR)/sap_os.bin
 	dd if=/dev/zero bs=512 count=100 >> $(BUILDDIR)/sap_os.bin
 
-.c.o:
-	$(CC) -MD -c $< -o $@ -std=gnu99 $(FLAGS)
+# build kernel.bin: first create a relocatable kernelfull.o, then final link with linker script
+$(BUILDDIR)/kernel.bin: $(KERNEL_OBJS) $(BUILDDIR)/libk.a
+	@mkdir -p $(BUILDDIR)
+	$(LD) -g -relocatable $(KERNEL_OBJS) -o $(BUILDDIR)/kernelfull.o
+	# link kernelfull.o with libk.a (archive after object!) and produce flat ELF/binary
+	$(CC) $(CFLAGS) $(CPPFLAGS) -nostdlib -nodefaultlibs $(LDFLAGS) \
+	    -o $@ $(BUILDDIR)/kernelfull.o $(BUILDDIR)/libk.a -lgcc
 
-.S.o:
-	$(CC) -MD -c $< -o $@ $(FLAGS)
+$(BUILDDIR)/boot.bin:
+	@mkdir -p $(BUILDDIR)
+	$(AS) -f bin $(ARCHDIR)/boot.S -o $@
+
+$(BUILDDIR)/%.o: $(ARCHDIR)/%.c
+	@mkdir -p $(BUILDDIR)
+	$(CC) -std=gnu99 $(CFLAGS) $(CPPFLAGS) -c $< -o $@
+
+$(BUILDDIR)/%.S.o: $(ARCHDIR)/%.S
+	@mkdir -p $(BUILDDIR)
+	# use CC -c so preprocessor runs for .S
+	$(AS) -f elf -g $< -o $@
+
+# archive: libk.a is assumed to be built in ../build by libc Makefile
+# ensure it exists as a prereq for kernel.bin (so make builds libc first)
+$(BUILDDIR)/libk.a:
+	@echo "libk.a should be built by libc before kernel. If not, run make in libc/ first."
+	@test -f $@ || (echo "ERROR: $@ missing" && false)
 
 install: install-headers install-kernel
 
 install-headers:
-	mkdir -p $(DESTDIR)$(INCLUDEDIR)
-	cp -R --preserve=timestamps include/. $(DESTDIR)$(INCLUDEDIR)/.
+	@mkdir -p $(DESTDIR)$(INCLUDEDIR)/kernel
+	@cp -R --preserve=timestamps include/. $(DESTDIR)$(INCLUDEDIR)/kernel/.
 
 install-kernel: bin
-	mkdir -p $(DESTDIR)$(BOOTDIR)
-	cp $(BUILDDIR)/sap_os.bin $(DESTDIR)$(BOOTDIR)
-
-$(BUILDDIR)/kernel.bin: $(OBJS)
-	echo "kernel.bin"
-	$(LD) -g -relocatable $(OBJS) -o $(BUILDDIR)/kernelfull.o
-	$(CC) $(FLAGS) -T $(ARCHDIR)/linker.ld -o $(BUILDDIR)/kernel.bin $(BUILDDIR)/kernelfull.o
-
-$(BUILDDIR)/boot.bin:
-	$(AS) -f bin $(ARCHDIR)/boot.asm -o $(BUILDDIR)/boot.bin
-
-$(BUILDDIR)/kernel.asm.o: $(ARCHDIR)/kernel.asm
-	$(AS) -f elf -g $(ARCHDIR)/kernel.asm -o $(BUILDDIR)/kernel.asm.o
-
-$(BUILDDIR)/kernel.o : $(ARCHDIR)/kernel.c
-	$(CC) $(INCLUDES) $(FLAGS) -std=gnu99 -c $(ARCHDIR)/kernel.c -o $(BUILDDIR)/kernel.o
+	@mkdir -p $(DESTDIR)$(BOOTDIR)
+	@cp $(BUILDDIR)/sap_os.bin $(DESTDIR)$(BOOTDIR)
 
 clean:
-	rm -rf $(BINDIR)/kernel.bin
-	rm -rf $(BUILDDIR)/
+	@rm -f $(BUILDDIR)/sap_os.bin $(BUILDDIR)/kernel.bin $(BUILDDIR)/kernelfull.o $(BUILDDIR)/boot.bin
+	@rm -f $(KERNEL_OBJS)
