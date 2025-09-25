@@ -3,5 +3,5 @@
 
 void kernel_main() {
     terminal_initialize();
-    printf("hello world!\nnext line");
+    printf("hello world!\nnext line\n\n\n\n\n\nnext\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nagain");
 }
