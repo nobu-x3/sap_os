@@ -1,0 +1,3 @@
+[submodule "references/PeachOS"]
+	path = references/PeachOS
+	url = https://github.com/nibblebits/PeachOS.git
