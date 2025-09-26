@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <kernel/tty.h>
+#include "tty.h"
 
 #include "vga.h"
 
@@ -51,18 +51,19 @@ void terminal_putchar(char c) {
   if (c == '\n' || c == '\r') {
     terminal_column = 0;
     ++terminal_row;
-    if (terminal_row == VGA_HEIGHT) {
-      scroll_down();
-      --terminal_row;
-    }
+    // if (terminal_row == VGA_HEIGHT) {
+    //   scroll_down();
+    //   --terminal_row;
+    // }
     return;
   }
   terminal_putentryat(uc, terminal_color, terminal_column, terminal_row);
   if (++terminal_column == VGA_WIDTH) {
     terminal_column = 0;
-    if (++terminal_row == VGA_HEIGHT) {
-      terminal_row = 0;
-    }
+    ++terminal_row;
+    // if (++terminal_row == VGA_HEIGHT) {
+    //   terminal_row = 0;
+    // }
   }
 }
 

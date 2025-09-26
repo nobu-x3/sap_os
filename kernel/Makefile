@@ -17,10 +17,10 @@ CFLAGS  := -g -O0 -ffreestanding -falign-jumps -falign-functions -falign-labels 
 CPPFLAGS:= -D__is_kernel -Iinclude
 LDFLAGS := -T $(ARCHDIR)/linker.ld
 
-KERNEL_SRCS := kernel.c tty.c idt.c
-KERNEL_ASMS := kernel.S idt.S io.S
+KERNEL_SRCS := kernel.c tty.c 	idt.c
+KERNEL_ASMS := kernel.asm io.asm 	idt.asm
 KERNEL_OBJS := $(patsubst %.c,$(BUILDDIR)/%.o,$(KERNEL_SRCS)) \
-               $(patsubst %.S,$(BUILDDIR)/%.S.o,$(KERNEL_ASMS))
+               $(patsubst %.asm,$(BUILDDIR)/%.asm.o,$(KERNEL_ASMS))
 
 .PHONY: all clean install install-headers install-kernel
 all: bin
@@ -36,21 +36,19 @@ bin: $(KERNEL_OBJS) $(BUILDDIR)/kernel.bin $(BUILDDIR)/boot.bin
 $(BUILDDIR)/kernel.bin: $(KERNEL_OBJS) $(BUILDDIR)/libk.a
 	@mkdir -p $(BUILDDIR)
 	$(LD) -g -relocatable $(KERNEL_OBJS) -o $(BUILDDIR)/kernelfull.o
-	# link kernelfull.o with libk.a (archive after object!) and produce flat ELF/binary
 	$(CC) $(CFLAGS) $(CPPFLAGS) -nostdlib -nodefaultlibs $(LDFLAGS) \
 	    -o $@ $(BUILDDIR)/kernelfull.o $(BUILDDIR)/libk.a -lgcc
 
 $(BUILDDIR)/boot.bin:
 	@mkdir -p $(BUILDDIR)
-	$(AS) -f bin $(ARCHDIR)/boot.S -o $@
+	$(AS) -f bin $(ARCHDIR)/boot.asm -o $@
 
-$(BUILDDIR)/%.o: $(ARCHDIR)/%.c
+$(BUILDDIR)/%.o: $(ARCHDIR)/%.c $(BUILDDIR)/libk.a
 	@mkdir -p $(BUILDDIR)
 	$(CC) -std=gnu99 $(CFLAGS) $(CPPFLAGS) -c $< -o $@
 
-$(BUILDDIR)/%.S.o: $(ARCHDIR)/%.S
+$(BUILDDIR)/%.asm.o: $(ARCHDIR)/%.asm
 	@mkdir -p $(BUILDDIR)
-	# use CC -c so preprocessor runs for .S
 	$(AS) -f elf -g $< -o $@
 
 # archive: libk.a is assumed to be built in ../build by libc Makefile

@@ -1,11 +1,11 @@
-#include <kernel/tty.h>
-#include <kernel/idt.h>
-#include <kernel/io.h>
+#include "idt.h"
+#include "io.h"
+#include "tty.h"
 #include <stdio.h>
 
 void kernel_main() {
-    terminal_initialize();
-    printf("hello world!\nnext line\n\n\n\n\n\nnext\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nagain");
-    idt_init();
-    outb(0x60, 0xff);
+  terminal_initialize();
+  printf("hello world!\nnext "
+         "again\n");
+  idt_init();
 }

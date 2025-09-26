@@ -57,7 +57,7 @@ gdt_data:
 
 gdt_end:
 gdt_descriptor:
-    dw gdt_end - gdt_start - 1
+    dw gdt_end - gdt_start-1
     dd gdt_start
 
 [BITS 32]
@@ -68,7 +68,7 @@ load32:
     mov ecx, 100            ; 51200 bytes loaded
     mov edi, 0x0100000      ; the address in memory to load the sectors into
     call ata_lba_read
-    ; Now we jump to where we loaded our kernel, this executing kernel.asm
+    ; Now we jump to where we loaded our kernel, this executing kernel.S
     ; CODE_SEG ensures CS becomes the code selector specified in GDT.
     jmp CODE_SEG:0x0100000
 

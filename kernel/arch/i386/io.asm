@@ -14,7 +14,7 @@ insb:
     pop ebp
     ret
 
-inws:
+insw:
     push ebp
     mov ebp, esp
     xor eax, eax
@@ -29,6 +29,7 @@ outb:
     mov eax, [ebp + 12]
     mov edx, [ebp + 8]
     out dx, al
+    pop ebp
     ret
 
 outw:
