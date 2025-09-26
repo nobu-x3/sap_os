@@ -18,7 +18,7 @@ CPPFLAGS:= -D__is_kernel -Iinclude
 LDFLAGS := -T $(ARCHDIR)/linker.ld
 
 KERNEL_SRCS := kernel.c tty.c idt.c
-KERNEL_ASMS := kernel.S idt.S
+KERNEL_ASMS := kernel.S idt.S io.S
 KERNEL_OBJS := $(patsubst %.c,$(BUILDDIR)/%.o,$(KERNEL_SRCS)) \
                $(patsubst %.S,$(BUILDDIR)/%.S.o,$(KERNEL_ASMS))
 
