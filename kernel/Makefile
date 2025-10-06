@@ -17,7 +17,7 @@ CFLAGS  := -g -O0 -ffreestanding -falign-jumps -falign-functions -falign-labels 
 CPPFLAGS:= -D__is_kernel -Iinclude
 LDFLAGS := -T $(ARCHDIR)/linker.ld
 
-KERNEL_SRCS := kernel.c tty.c 	idt.c
+KERNEL_SRCS := kernel.c tty.c 		idt.c	heap.c	kheap.c
 KERNEL_ASMS := kernel.asm io.asm 	idt.asm
 KERNEL_OBJS := $(patsubst %.c,$(BUILDDIR)/%.o,$(KERNEL_SRCS)) \
                $(patsubst %.asm,$(BUILDDIR)/%.asm.o,$(KERNEL_ASMS))
