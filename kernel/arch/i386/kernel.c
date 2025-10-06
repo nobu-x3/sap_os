@@ -10,4 +10,5 @@ void kernel_main() {
          "again\n");
   kheap_init();
   idt_init();
+  enable_interrupts();
 }
