@@ -34,7 +34,7 @@ outb:
 
 outw:
     push ebp
-    mov ebp, ebp
+    mov ebp, esp
     mov eax, [ebp + 12]
     mov edx, [ebp + 8]
     out dx, ax
