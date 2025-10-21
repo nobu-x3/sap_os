@@ -27,13 +27,17 @@ idt_load:
     ret
 
 int21h:
+    cli
     pushad
     call int21_handler
     popad
+    sti
     iret
 
 no_interrupt:
+    cli
     pushad
     call no_interrupt_handler
     popad
+    sti
     iret
