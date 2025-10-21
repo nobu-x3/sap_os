@@ -42,7 +42,7 @@ out:
   return res;
 }
 
-static size_t heap_align_value_to_upper(size_t val) {
+static uint32_t heap_align_value_to_upper(uint32_t val) {
   if ((val % SAP_OS_HEAP_BLOCK_SIZE) == 0)
     return val;
   val = (val - (val % SAP_OS_HEAP_BLOCK_SIZE));
@@ -88,12 +88,12 @@ void *heap_block_to_abs_address(struct heap *heap, int block_id) {
 
 void heap_mark_blocks_taken(struct heap *heap, int start_block_id,
                             int blocks_num) {
-  const uint32_t end_block_id = (start_block_id + blocks_num) - 1;
+  const int end_block_id = (start_block_id + blocks_num) - 1;
   HEAP_BLOCK_TABLE_ENTRY entry =
       HEAP_BLOCK_TABLE_ENTRY_TAKEN | HEAP_BLOCK_IS_FIRST;
   if (blocks_num > 1)
     entry |= HEAP_BLOCK_HAS_NEXT;
-  for (size_t i = start_block_id; i < end_block_id; ++i) {
+  for (size_t i = start_block_id; i <= end_block_id; ++i) {
     heap->table->entries[i] = entry;
     entry = HEAP_BLOCK_TABLE_ENTRY_TAKEN;
     if (i != end_block_id - 1)
@@ -101,7 +101,7 @@ void heap_mark_blocks_taken(struct heap *heap, int start_block_id,
   }
 }
 
-void* heap_malloc_blocks(struct heap *heap, uint32_t total_blocks) {
+void *heap_malloc_blocks(struct heap *heap, uint32_t total_blocks) {
   void *address = NULL;
   int start_block_id = heap_get_start_block(heap, total_blocks);
   if (start_block_id < 0)
@@ -112,7 +112,7 @@ out:
   return address;
 }
 
-void heap_mark_blocks_free(struct heap *heap, uint32_t starting_block_id) {
+void heap_mark_blocks_free(struct heap *heap, int starting_block_id) {
   struct heap_table *table = heap->table;
   for (size_t i = starting_block_id; i < table->total; ++i) {
     HEAP_BLOCK_TABLE_ENTRY entry = table->entries[i];
