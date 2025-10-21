@@ -1,5 +1,5 @@
 #ifndef _KERNEL_TTY_H
-#define _KERNEL_TTY_H
+#define _KERNEL_TTY_H 1
 
 #ifdef __cplusplus
 extern "C" {

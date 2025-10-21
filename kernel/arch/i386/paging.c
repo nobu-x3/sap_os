@@ -1,5 +1,5 @@
 #include "paging.h"
-#include "kheap.h"
+#include <stdlib.h>
 
 void paging_load_directory(uint32_t *directory);
 
@@ -7,18 +7,17 @@ static uint32_t *current_directory = NULL;
 
 struct paging_4gb_chunk *paging_new_4gb(uint8_t flags) {
   uint32_t *directory =
-      kcalloc(sizeof(uint32_t) * PAGING_TOTAL_ENTRIES_PER_TABLE);
+      calloc(sizeof(uint32_t) * PAGING_TOTAL_ENTRIES_PER_TABLE);
   int offset = 0;
   for (int i = 0; i < PAGING_TOTAL_ENTRIES_PER_TABLE; ++i) {
-    uint32_t *entry =
-        kcalloc(sizeof(uint32_t) * PAGING_TOTAL_ENTRIES_PER_TABLE);
+    uint32_t *entry = calloc(sizeof(uint32_t) * PAGING_TOTAL_ENTRIES_PER_TABLE);
     for (int k = 0; k < PAGING_TOTAL_ENTRIES_PER_TABLE; ++k) {
       entry[k] = (offset + (k * PAGING_PAGE_SIZE)) | flags;
     }
     offset += (PAGING_TOTAL_ENTRIES_PER_TABLE * PAGING_PAGE_SIZE);
     directory[i] = (uint32_t)entry | flags | PAGING_IS_WRITABLE;
   }
-  struct paging_4gb_chunk *chunk = kcalloc(sizeof(struct paging_4gb_chunk));
+  struct paging_4gb_chunk *chunk = calloc(sizeof(struct paging_4gb_chunk));
   chunk->directory_entry = directory;
   return chunk;
 }

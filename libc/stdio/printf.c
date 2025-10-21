@@ -1,4 +1,3 @@
-/* stdio/printf.c -- drop-in replacement for kernel printf */
 #include <limits.h>
 #include <stdarg.h>
 #include <stdbool.h>

@@ -35,6 +35,7 @@ SRCS := \
     stdio/putchar.c \
     stdio/puts.c \
     stdlib/abort.c \
+    stdlib/memory.c \
     ssp/ssp.c \
     string/memcmp.c \
     string/memcpy.c \

@@ -13,12 +13,12 @@ BOOTDIR ?= $(EXEC_PREFIX)/boot
 INCLUDEDIR ?= $(PREFIX)/include
 LIBDIR ?= $(EXEC_PREFIX)/lib
 
-CFLAGS  := -g -O0 -ffreestanding -falign-jumps -falign-functions -falign-labels -falign-loops -fstrength-reduce -fomit-frame-pointer -finline-functions -Wno-unused-functions -fno-builtin -Werror -Wno-unused-label -Wno-cpp -Wno-unused-parameter -nostartfiles -Wall -Iinclude
-CPPFLAGS:= -D__is_kernel -Iinclude
+CFLAGS  := -g -O0 -ffreestanding -falign-jumps -falign-functions -falign-labels -falign-loops -fstrength-reduce -fomit-frame-pointer -finline-functions -Wno-unused-functions -fno-builtin -Werror -Wno-unused-label -Wno-cpp -Wno-unused-parameter -nostartfiles -Wall
+CPPFLAGS:= -D__is_kernel -Iinclude -I$(abspath ../libc/include)
 LDFLAGS := -T $(ARCHDIR)/linker.ld
 LDELFFLAGS := -T $(ARCHDIR)/linker-elf.ld
 
-KERNEL_SRCS := kernel.c tty.c idt.c	heap.c kheap.c paging.c
+KERNEL_SRCS := kernel.c tty.c idt.c	heap.c paging.c
 KERNEL_ASMS := kernel.asm io.asm idt.asm paging.asm
 KERNEL_OBJS := $(patsubst %.c,$(BUILDDIR)/%.o,$(KERNEL_SRCS)) \
                $(patsubst %.asm,$(BUILDDIR)/%.asm.o,$(KERNEL_ASMS))

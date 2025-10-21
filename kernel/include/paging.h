@@ -1,5 +1,5 @@
 #ifndef PAGING_H
-#define PAGING_H
+#define PAGING_H 1
 
 #ifdef __cplusplus
 extern "C" {

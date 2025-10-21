@@ -1,9 +1,11 @@
-#include "kheap.h"
-#include "config.h"
-#include "heap.h"
+#include "stdlib.h"
+
+#if defined(__is_libk)
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
+
+#include <kernel/config.h>
+#include <kernel/heap.h>
 
 struct heap kernel_heap;
 struct heap_table kernel_heap_table;
@@ -23,14 +25,15 @@ void kheap_init() {
   }
 }
 
-void *kmalloc(size_t size) { return heap_malloc(&kernel_heap, size); }
+void *malloc(size_t size) { return heap_malloc(&kernel_heap, size); }
 
-void kfree(void *mem) { heap_free(&kernel_heap, mem); }
+void free(void *mem) { heap_free(&kernel_heap, mem); }
 
-void *kcalloc(size_t size) {
-  void *mem = kmalloc(size);
+void *calloc(size_t size) {
+  void *mem = malloc(size);
   if (!mem)
     return NULL;
-  memset(mem, 0, size);
+  memset(mem, 0x00, size);
   return mem;
 }
+#endif
