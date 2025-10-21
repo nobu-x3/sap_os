@@ -16,6 +16,7 @@ LIBDIR ?= $(EXEC_PREFIX)/lib
 CFLAGS  := -g -O0 -ffreestanding -falign-jumps -falign-functions -falign-labels -falign-loops -fstrength-reduce -fomit-frame-pointer -finline-functions -Wno-unused-functions -fno-builtin -Werror -Wno-unused-label -Wno-cpp -Wno-unused-parameter -nostartfiles -Wall -Iinclude
 CPPFLAGS:= -D__is_kernel -Iinclude
 LDFLAGS := -T $(ARCHDIR)/linker.ld
+LDELFFLAGS := -T $(ARCHDIR)/linker-elf.ld
 
 KERNEL_SRCS := kernel.c tty.c idt.c	heap.c kheap.c paging.c
 KERNEL_ASMS := kernel.asm io.asm idt.asm paging.asm
@@ -38,10 +39,12 @@ $(BUILDDIR)/kernel.bin: $(KERNEL_OBJS) $(BUILDDIR)/libk.a
 	$(LD) -g -relocatable $(KERNEL_OBJS) -o $(BUILDDIR)/kernelfull.o
 	$(CC) $(CFLAGS) $(CPPFLAGS) -nostdlib -nodefaultlibs $(LDFLAGS) \
 	    -o $@ $(BUILDDIR)/kernelfull.o $(BUILDDIR)/libk.a -lgcc
+	$(CC) $(CFLAGS) $(CPPFLAGS) -nostdlib -nodefaultlibs $(LDELFFLAGS) \
+	    -o $(BUILDDIR)/kernelfull-elf.o $(BUILDDIR)/kernelfull.o $(BUILDDIR)/libk.a -lgcc
 
 $(BUILDDIR)/boot.bin:
 	@mkdir -p $(BUILDDIR)
-	$(AS) -f bin $(ARCHDIR)/boot.asm -o $@
+	$(AS) -f bin -g $(ARCHDIR)/boot.asm -o $@
 
 $(BUILDDIR)/%.o: $(ARCHDIR)/%.c $(BUILDDIR)/libk.a
 	@mkdir -p $(BUILDDIR)

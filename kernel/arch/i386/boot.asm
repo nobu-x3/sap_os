@@ -41,7 +41,7 @@ gdt_null:
 gdt_code:               ; CS SHOULD POINT TO THIS
     dw 0xffff           ; Segment limit bits 0-15
     dw 0                ; Base bits 0-15
-    db 0                ; Base bits 16-23 
+    db 0                ; Base bits 16-23
     db 0x9a             ; Access byte
     db 11001111b        ; High 4 bit flags and low 4 bit flags
     db 0                ; Base bits 24-31
@@ -50,7 +50,7 @@ gdt_code:               ; CS SHOULD POINT TO THIS
 gdt_data:
     dw 0xffff           ; Segment limit bits 0-15
     dw 0                ; Base bits 0-15
-    db 0                ; Base bits 16-23 
+    db 0                ; Base bits 16-23
     db 0x92             ; Access byte
     db 11001111b        ; High 4 bit flags and low 4 bit flags
     db 0                ; Base bits 24-31
@@ -61,7 +61,7 @@ gdt_descriptor:
     dd gdt_start
 
 [BITS 32]
-load32: 
+load32:
     ; load kernel
     ; lba sector 0 os bootloader, 1 is the second sector
     mov eax, 1
@@ -117,12 +117,12 @@ ata_lba_read:
     ; need to read 256 words at a time
     mov ecx, 256
     mov dx, 0x1F0
-    rep insw               ; this performs a repeated word io block input from port specified in dx the number of times specified in ecx. 
+    rep insw               ; this performs a repeated word io block input from port specified in dx the number of times specified in ecx.
                             ; It decrements ecx. Loads the sectors to address stored in edi.
     pop ecx                 ; restore old loop counter
     loop .next_sector
     ret
 
 
-times 510 -($-$$) db 0
+times 510 - ($ - $$) db 0
 dw 0xAA55
