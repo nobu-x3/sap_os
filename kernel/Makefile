@@ -4,6 +4,7 @@ HOSTARCH!=../target-triplet-to-arch.sh $(HOST)
 
 ARCHDIR := arch/$(HOSTARCH)
 BUILDDIR := ../build
+BINDIR := ../bin
 $(shell mkdir -p $(BUILDDIR))
 
 DESTDIR ?=
@@ -14,62 +15,61 @@ INCLUDEDIR ?= $(PREFIX)/include
 LIBDIR ?= $(EXEC_PREFIX)/lib
 
 CFLAGS  := -g -O0 -ffreestanding -falign-jumps -falign-functions -falign-labels -falign-loops -fstrength-reduce -fomit-frame-pointer -finline-functions -Wno-unused-functions -fno-builtin -Werror -Wno-unused-label -Wno-cpp -Wno-unused-parameter -nostartfiles -Wall
-CPPFLAGS:= -D__is_kernel -Iinclude -I$(abspath ../libc/include)
+CPPFLAGS:= -D__is_kernel
 LDFLAGS := -T $(ARCHDIR)/linker.ld
 LDELFFLAGS := -T $(ARCHDIR)/linker-elf.ld
 
-KERNEL_SRCS := kernel.c tty.c idt.c	heap.c paging.c
-KERNEL_ASMS := kernel.asm io.asm idt.asm paging.asm
-KERNEL_OBJS := $(patsubst %.c,$(BUILDDIR)/%.o,$(KERNEL_SRCS)) \
-               $(patsubst %.asm,$(BUILDDIR)/%.asm.o,$(KERNEL_ASMS))
+FILES = $(BUILDDIR)/kernel.asm.o $(BUILDDIR)/kernel.o $(BUILDDIR)/idt.asm.o $(BUILDDIR)/idt.o $(BUILDDIR)/memory.o $(BUILDDIR)/io.asm.o $(BUILDDIR)/heap.o $(BUILDDIR)/kheap.o $(BUILDDIR)/paging.o $(BUILDDIR)/paging.asm.o
+INCLUDES = -I./src
+FLAGS = -g -ffreestanding -falign-jumps -falign-functions -falign-labels -falign-loops -fstrength-reduce -fomit-frame-pointer -finline-functions -Wno-unused-function -fno-builtin -Werror -Wno-unused-label -Wno-cpp -Wno-unused-parameter -nostdlib -nostartfiles -nodefaultlibs -Wall -O0 -Iinc
 
-.PHONY: all clean install install-headers install-kernel
-all: bin
+all: $(BINDIR)/boot.bin $(BINDIR)/kernel.bin
+	rm -rf $(BINDIR)/sap_os.bin
+	dd if=$(BINDIR)/boot.bin >> $(BINDIR)/sap_os.bin
+	dd if=$(BINDIR)/kernel.bin >> $(BINDIR)/sap_os.bin
+	dd if=/dev/zero bs=512 count=100 >> $(BINDIR)/sap_os.bin
 
-bin: $(KERNEL_OBJS) $(BUILDDIR)/kernel.bin $(BUILDDIR)/boot.bin
-	@mkdir -p $(BUILDDIR)
-	@rm -f $(BUILDDIR)/sap_os.bin
-	dd if=$(BUILDDIR)/boot.bin  of=$(BUILDDIR)/sap_os.bin bs=1 conv=notrunc 2>/dev/null || true
-	dd if=$(BUILDDIR)/kernel.bin >> $(BUILDDIR)/sap_os.bin
-	dd if=/dev/zero bs=512 count=100 >> $(BUILDDIR)/sap_os.bin
+$(BINDIR)/kernel.bin: $(FILES)
+	$(LD) -g -relocatable $(FILES) -o $(BUILDDIR)/kernelfull.o
+	$(CC) $(FLAGS) -T ./src/linker.ld -o $(BINDIR)/kernel.bin -ffreestanding -O0 -nostdlib $(BUILDDIR)/kernelfull.o
 
-# build kernel.bin: first create a relocatable kernelfull.o, then final link with linker script
-$(BUILDDIR)/kernel.bin: $(KERNEL_OBJS) $(BUILDDIR)/libk.a
-	@mkdir -p $(BUILDDIR)
-	$(LD) -g -relocatable $(KERNEL_OBJS) -o $(BUILDDIR)/kernelfull.o
-	$(CC) $(CFLAGS) $(CPPFLAGS) -nostdlib -nodefaultlibs $(LDFLAGS) \
-	    -o $@ $(BUILDDIR)/kernelfull.o $(BUILDDIR)/libk.a -lgcc
-	$(CC) $(CFLAGS) $(CPPFLAGS) -nostdlib -nodefaultlibs $(LDELFFLAGS) \
-	    -o $(BUILDDIR)/kernelfull-elf.o $(BUILDDIR)/kernelfull.o $(BUILDDIR)/libk.a -lgcc
+$(BINDIR)/boot.bin: ./src/boot/boot.asm
+	$(AS) -f bin ./src/boot/boot.asm -o $(BINDIR)/boot.bin
 
-$(BUILDDIR)/boot.bin:
-	@mkdir -p $(BUILDDIR)
-	$(AS) -f bin -g $(ARCHDIR)/boot.asm -o $@
+$(BUILDDIR)/kernel.asm.o: ./src/kernel.asm
+	$(AS) -f elf -g ./src/kernel.asm -o $(BUILDDIR)/kernel.asm.o
 
-$(BUILDDIR)/%.o: $(ARCHDIR)/%.c $(BUILDDIR)/libk.a
-	@mkdir -p $(BUILDDIR)
-	$(CC) -std=gnu99 $(CFLAGS) $(CPPFLAGS) -c $< -o $@
+$(BUILDDIR)/kernel.o: ./src/kernel.c
+	$(CC) $(INCLUDES) $(FLAGS) -std=gnu99 -c ./src/kernel.c -o $(BUILDDIR)/kernel.o
 
-$(BUILDDIR)/%.asm.o: $(ARCHDIR)/%.asm
-	@mkdir -p $(BUILDDIR)
-	$(AS) -f elf -g $< -o $@
+$(BUILDDIR)/idt.asm.o: ./src/idt/idt.asm
+	$(AS) -f elf -g ./src/idt/idt.asm -o $(BUILDDIR)/idt.asm.o
 
-# archive: libk.a is assumed to be built in ../build by libc Makefile
-# ensure it exists as a prereq for kernel.bin (so make builds libc first)
-$(BUILDDIR)/libk.a:
-	@echo "libk.a should be built by libc before kernel. If not, run make in libc/ first."
-	@test -f $@ || (echo "ERROR: $@ missing" && false)
+$(BUILDDIR)/idt.o: ./src/idt/idt.c
+	$(CC) $(INCLUDES) -I./src/idt $(FLAGS) -std=gnu99 -c ./src/idt/idt.c -o $(BUILDDIR)/idt.o
 
-install: install-headers install-kernel
+$(BUILDDIR)/memory.o: ./src/memory/memory.c
+	$(CC) $(INCLUDES) -I./src/memory $(FLAGS) -std=gnu99 -c ./src/memory/memory.c -o $(BUILDDIR)/memory.o
 
-install-headers:
-	@mkdir -p $(DESTDIR)$(INCLUDEDIR)/kernel
-	@cp -R --preserve=timestamps include/. $(DESTDIR)$(INCLUDEDIR)/kernel/.
+$(BUILDDIR)/io.asm.o: ./src/io/io.asm
+	$(AS) -f elf -g ./src/io/io.asm -o $(BUILDDIR)/io.asm.o
 
-install-kernel: bin
-	@mkdir -p $(DESTDIR)$(BOOTDIR)
-	@cp $(BUILDDIR)/sap_os.bin $(DESTDIR)$(BOOTDIR)
+$(BUILDDIR)/heap.o: ./src/memory/heap/heap.c
+	$(CC) $(INCLUDES) -I./src/memory/heap $(FLAGS) -std=gnu99 -c ./src/memory/heap/heap.c -o $(BUILDDIR)/heap.o
+
+$(BUILDDIR)/kheap.o: ./src/memory/heap/kheap.c
+	$(CC) $(INCLUDES) -I./src/memory/heap $(FLAGS) -std=gnu99 -c ./src/memory/heap/kheap.c -o $(BUILDDIR)/kheap.o
+
+$(BUILDDIR)/paging.o: ./src/memory/paging/paging.c
+	$(CC) $(INCLUDES) -I./src/memory/paging $(FLAGS) -std=gnu99 -c ./src/memory/paging/paging.c -o $(BUILDDIR)/paging.o
+
+$(BUILDDIR)/paging.asm.o: ./src/memory/paging/paging.asm
+	$(AS) -f elf -g ./src/memory/paging/paging.asm -o $(BUILDDIR)/paging.asm.o
+
 
 clean:
-	@rm -f $(BUILDDIR)/sap_os.bin $(BUILDDIR)/kernel.bin $(BUILDDIR)/kernelfull.o $(BUILDDIR)/boot.bin
-	@rm -f $(KERNEL_OBJS)
+	rm -rf $(BINDIR)/boot.bin
+	rm -rf $(BINDIR)/kernel.bin
+	rm -rf $(BINDIR)/sap_os.bin
+	rm -rf ${FILES}
+	rm -rf $(BUILDDIR)/kernelfull.o
