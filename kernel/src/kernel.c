@@ -62,17 +62,14 @@ void kernel_main() {
   terminal_initialize();
   print("Hello world!\ntest");
 
-  // Initialize the heap
   kheap_init();
 
-  // Initialize the interrupt descriptor table
+  disk_init();
+
   idt_init();
 
-  // Setup paging
   kernel_chunk = paging_new_4gb(PAGING_IS_WRITEABLE | PAGING_IS_PRESENT |
                                 PAGING_ACCESS_FROM_ALL);
-
-  // Switch to kernel paging chunk
   paging_switch(paging_4gb_chunk_get_directory(kernel_chunk));
 
   char *ptr = kzalloc(4096);
@@ -80,13 +77,7 @@ void kernel_main() {
              (uint32_t)ptr | PAGING_ACCESS_FROM_ALL | PAGING_IS_PRESENT |
                  PAGING_IS_WRITEABLE);
 
-  // Enable paging
   enable_paging();
 
-  // Enable the system interrupts
   enable_interrupts();
-
-  char buf[512];
-  disk_read_sector(0, 1, buf);
-  print(buf);
 }

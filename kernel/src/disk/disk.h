@@ -24,6 +24,23 @@
 #define DISK_STATUS_DRQ_MASK           0x08
 // clang-format on
 
-int disk_read_sector(int lba, int total_sectors, void *buf);
+typedef unsigned int SAP_OS_DISK_TYPE;
 
+struct disk {
+    SAP_OS_DISK_TYPE type;
+    int sector_size;
+};
+
+void disk_init();
+struct disk* disk_get(int index);
+/**
+ * @brief Reads one or more blocks from a disk into a buffer.
+ *
+ * @param idisk Pointer to the disk structure to read from.
+ * @param lba Logical Block Addressing (LBA) of the first block to read.
+ * @param total Number of blocks to read.
+ * @param buf Pointer to the buffer where the read data will be stored.
+ * @return int Returns 0 on success, or a negative error code on failure.
+ */
+int disk_read_block(struct disk* idisk, unsigned int lba, int total, void* buf);
 #endif

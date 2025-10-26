@@ -1,7 +1,10 @@
 #include "disk.h"
+#include "config.h"
 #include "io/io.h"
+#include "memory/memory.h"
+#include "status.h"
 
-int disk_read_sector(int lba, int total, void *buf) {
+static int disk_read_sector(int lba, int total, void *buf) {
   outb(DISK_MASTER_DEVICE_REG, (lba >> 24) | DISK_MASTER_DRIVE_MASK);
   outb(DISK_MASTER_SECTOR_COUNT_REG, total);
   outb(DISK_MASTER_LBA_LO_REG, (unsigned char)(lba & 0xff));
@@ -22,4 +25,25 @@ int disk_read_sector(int lba, int total, void *buf) {
     }
   }
   return 0;
+}
+
+struct disk disk;
+
+void disk_init() {
+  memset(&disk, 0, sizeof(disk));
+  disk.type = SAP_OS_DISK_TYPE_REAL;
+  disk.sector_size = SAP_OS_DISK_SECTOR_SIZE;
+}
+
+struct disk *disk_get(int index) {
+  if (index != 0)
+    return 0;
+  return &disk;
+}
+
+int disk_read_block(struct disk *idisk, unsigned int lba, int total,
+                    void *buf) {
+  if (idisk != &disk)
+    return -EIO;
+  return disk_read_sector(lba, total, buf);
 }
