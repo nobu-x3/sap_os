@@ -19,7 +19,7 @@ CPPFLAGS:= -D__is_kernel
 LDFLAGS := -T $(ARCHDIR)/linker.ld
 LDELFFLAGS := -T $(ARCHDIR)/linker-elf.ld
 
-FILES = $(BUILDDIR)/kernel.asm.o $(BUILDDIR)/kernel.o $(BUILDDIR)/idt.asm.o $(BUILDDIR)/idt.o $(BUILDDIR)/memory.o $(BUILDDIR)/io.asm.o $(BUILDDIR)/heap.o $(BUILDDIR)/kheap.o $(BUILDDIR)/paging.o $(BUILDDIR)/paging.asm.o $(BUILDDIR)/disk.o
+FILES = $(BUILDDIR)/kernel.asm.o $(BUILDDIR)/kernel.o $(BUILDDIR)/idt.asm.o $(BUILDDIR)/idt.o $(BUILDDIR)/memory.o $(BUILDDIR)/io.asm.o $(BUILDDIR)/heap.o $(BUILDDIR)/kheap.o $(BUILDDIR)/paging.o $(BUILDDIR)/paging.asm.o $(BUILDDIR)/disk.o $(BUILDDIR)/string.o
 INCLUDES = -I./src
 FLAGS = -g -ffreestanding -falign-jumps -falign-functions -falign-labels -falign-loops -fstrength-reduce -fomit-frame-pointer -finline-functions -Wno-unused-function -fno-builtin -Werror -Wno-unused-label -Wno-cpp -Wno-unused-parameter -nostdlib -nostartfiles -nodefaultlibs -Wall -O0 -Iinc
 
@@ -69,6 +69,8 @@ $(BUILDDIR)/paging.asm.o: ./src/memory/paging/paging.asm
 $(BUILDDIR)/disk.o: ./src/disk/disk.c
 	$(CC) $(INCLUDES) -I./src/disk $(FLAGS) -std=gnu99 -c ./src/disk/disk.c -o $(BUILDDIR)/disk.o
 
+$(BUILDDIR)/string.o: ./src/string/string.c
+	$(CC) $(INCLUDES) -I./src/string $(FLAGS) -std=gnu99 -c ./src/string/string.c -o $(BUILDDIR)/string.o
 
 clean:
 	rm -rf $(BINDIR)/boot.bin
