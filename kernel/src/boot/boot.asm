@@ -9,7 +9,7 @@ _start:
     nop
 
  times 33 db 0
- 
+
 start:
     jmp 0:step2
 
@@ -29,7 +29,7 @@ step2:
     or eax, 0x1
     mov cr0, eax
     jmp CODE_SEG:load32
-    
+
 ; GDT
 gdt_start:
 gdt_null:
@@ -59,7 +59,7 @@ gdt_end:
 gdt_descriptor:
     dw gdt_end - gdt_start-1
     dd gdt_start
- 
+
  [BITS 32]
  load32:
     mov eax, 1
@@ -107,7 +107,7 @@ ata_lba_read:
     mov al, 0x20
     out dx, al
 
-    ; Read all sectors into memory
+; Read all sectors into memory
 .next_sector:
     push ecx
 
